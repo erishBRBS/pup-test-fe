@@ -1,0 +1,184 @@
+<div class="rounded-lg bg-white p-4 shadow-sm">
+  <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-slate-900">
+        {{ title }}
+      </h2>
+
+      <p *ngIf="subtitle" class="text-sm text-slate-500">
+        {{ subtitle }}
+      </p>
+    </div>
+  </div>
+
+  <p-table
+    #dt
+    [value]="tableValue"
+    [dataKey]="dataKey"
+    [paginator]="true"
+    [rows]="rows"
+    [rowsPerPageOptions]="rowsPerPageOptions"
+    [showGridlines]="true"
+    [globalFilterFields]="globalFilterFields"
+    [(selection)]="selectedRows"
+    (selectionChange)="onSelectionChange()"
+    styleClass="p-datatable-sm"
+  >
+    >
+    <ng-template pTemplate="caption">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center">
+          <div class="flex items-center gap-2">
+            <p-checkbox
+              [binary]="true"
+              [(ngModel)]="selectAllChecked"
+              (onChange)="toggleSelectAllPage($event.checked)"
+            ></p-checkbox>
+
+            <span class="text-sm text-slate-600"> Select all </span>
+          </div>
+
+          <p-iconfield iconPosition="left">
+            <p-inputicon>
+              <i class="pi pi-search"></i>
+            </p-inputicon>
+
+            <input
+              pInputText
+              type="text"
+              placeholder="Search keyword"
+              [(ngModel)]="searchValue"
+              (keyup.enter)="search(dt)"
+            />
+          </p-iconfield>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            pButton
+            type="button"
+            label="Clear"
+            icon="pi pi-filter-slash"
+            severity="secondary"
+            [outlined]="true"
+            (click)="clear(dt)"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            [label]="deleteButtonLabel"
+            icon="pi pi-trash"
+            severity="danger"
+            [disabled]="selectedRows.length === 0"
+            (click)="onBulkDelete()"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            [label]="addButtonLabel"
+            icon="pi pi-plus"
+            (click)="addClicked.emit()"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem"></th>
+
+        <ng-container *ngFor="let column of columns">
+          <th
+            *ngIf="column.sortable !== false"
+            [pSortableColumn]="column.field"
+            [style.min-width]="column.minWidth || '10rem'"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span>{{ column.header }}</span>
+              <p-sortIcon [field]="column.field"></p-sortIcon>
+            </div>
+          </th>
+
+          <th *ngIf="column.sortable === false" [style.min-width]="column.minWidth || '10rem'">
+            {{ column.header }}
+          </th>
+        </ng-container>
+
+        <th *ngIf="actions.length > 0" style="min-width: 12rem">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        <td>
+          <ng-container *ngIf="!loading; else checkboxSkeleton">
+            <p-tableCheckbox [value]="row"></p-tableCheckbox>
+          </ng-container>
+
+          <ng-template #checkboxSkeleton>
+            <p-skeleton width="1.5rem" height="1.5rem"></p-skeleton>
+          </ng-template>
+        </td>
+
+        <td *ngFor="let column of columns">
+          <ng-container *ngIf="loading; else realValue">
+            <p-skeleton height="1.5rem"></p-skeleton>
+          </ng-container>
+
+          <ng-template #realValue>
+            <ng-container [ngSwitch]="column.type">
+              <p-tag
+                *ngSwitchCase="'boolean'"
+                [value]="getBooleanLabel(getValue(row, column.field))"
+                [severity]="getBooleanSeverity(getValue(row, column.field))"
+              ></p-tag>
+
+              <span *ngSwitchCase="'date'">
+                {{ getValue(row, column.field) | date: 'medium' }}
+              </span>
+
+              <span *ngSwitchDefault>
+                {{ getValue(row, column.field) }}
+              </span>
+            </ng-container>
+          </ng-template>
+        </td>
+
+        <td *ngIf="actions.length > 0">
+          <ng-container *ngIf="loading; else actionButtons">
+            <div class="flex gap-2">
+              <p-skeleton width="2rem" height="2rem"></p-skeleton>
+              <p-skeleton width="2rem" height="2rem"></p-skeleton>
+              <p-skeleton width="2rem" height="2rem"></p-skeleton>
+            </div>
+          </ng-container>
+
+          <ng-template #actionButtons>
+            <div class="flex flex-wrap gap-2">
+              <button
+                *ngFor="let item of actions"
+                pButton
+                type="button"
+                size="small"
+                [label]="item.label || ''"
+                [icon]="item.icon"
+                [severity]="item.severity || 'secondary'"
+                (click)="item.action(row)"
+              ></button>
+            </div>
+          </ng-template>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td [attr.colspan]="columns.length + 2" class="py-4 text-center text-slate-500">
+          No records found.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
