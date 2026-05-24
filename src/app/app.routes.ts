@@ -1,29 +1,34 @@
 import { Routes } from '@angular/router';
 
+import { LoginComponent } from './pages/login/login.component';
+import { GreetingComponent } from './pages/greeting/greeting.component';
+import { UserManagementComponent } from './pages/user-management/user-management.component';
+
+import { authGuard } from './core/guards/auth.guard';
+import { homeRedirectGuard } from './core/guards/home-redirect.guard';
+import { loginRedirectGuard } from './core/guards/login-redirect.guard';
+
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'login'
+    component: LoginComponent,
+    canActivate: [homeRedirectGuard]
   },
   {
     path: 'login',
-    loadComponent: () =>
-      import('./pages/login/login.component').then((m) => m.LoginComponent)
+    component: LoginComponent,
+    canActivate: [loginRedirectGuard]
   },
   {
     path: 'user-management',
-    loadComponent: () =>
-      import('./pages/user-management/user-management.component').then(
-        (m) => m.UserManagementComponent
-      )
+    component: UserManagementComponent,
+    canActivate: [authGuard]
   },
   {
     path: 'greeting',
-    loadComponent: () =>
-      import('./pages/greeting/greeting.component').then(
-        (m) => m.GreetingComponent
-      )
+    component: GreetingComponent,
+    canActivate: [authGuard]
   },
   {
     path: '**',

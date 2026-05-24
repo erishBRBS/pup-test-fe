@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
   selector: 'app-greeting',
   standalone: true,
   imports: [CommonModule, CardModule, ButtonModule],
-  templateUrl: './greeting.component.html'
+  templateUrl: './greeting.component.html',
 })
 export class GreetingComponent {
   private readonly authService = inject(AuthService);
@@ -29,6 +29,7 @@ export class GreetingComponent {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigateByUrl('/login');
+    this.user = null;
+    this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 }
