@@ -9,9 +9,27 @@ export interface User {
   firstName: string;
   lastName: string;
   role?: Role;
+  roleId?: number;
   roleName?: string;
   status: boolean;
   lastActivityAt?: string | null;
+}
+
+export interface UserCreateRequest {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  roleId: number;
+  status: boolean;
+}
+
+export interface UserUpdateRequest {
+  username: string;
+  firstName: string;
+  lastName: string;
+  roleId: number;
+  status: boolean;
 }
 
 export interface Pagination {

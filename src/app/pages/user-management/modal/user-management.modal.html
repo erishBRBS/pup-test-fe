@@ -1,0 +1,149 @@
+<p-dialog
+  [visible]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '34rem' }"
+  [header]="modalTitle"
+  (onHide)="close()"
+>
+  <ng-container *ngIf="isFormMode">
+    <div *ngIf="loading" class="py-6 text-center text-sm text-slate-500">
+      Loading user details...
+    </div>
+
+    <form *ngIf="!loading" [formGroup]="form" class="space-y-4">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700"> First Name </label>
+
+        <input
+          pInputText
+          class="w-full"
+          formControlName="firstName"
+          placeholder="Enter first name"
+        />
+
+        <small
+          *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched"
+          class="text-red-500"
+        >
+          First name is required.
+        </small>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Last Name </label>
+
+        <input pInputText class="w-full" formControlName="lastName" placeholder="Enter last name" />
+
+        <small
+          *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched"
+          class="text-red-500"
+        >
+          Last name is required.
+        </small>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Username </label>
+
+        <input pInputText class="w-full" formControlName="username" placeholder="Enter username" />
+
+        <small
+          *ngIf="form.get('username')?.invalid && form.get('username')?.touched"
+          class="text-red-500"
+        >
+          Username is required.
+        </small>
+      </div>
+
+      <div *ngIf="isAddMode">
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Password </label>
+
+        <input
+          pInputText
+          type="password"
+          class="w-full"
+          formControlName="password"
+          placeholder="Enter password"
+        />
+
+        <small
+          *ngIf="form.get('password')?.invalid && form.get('password')?.touched"
+          class="text-red-500"
+        >
+          Password is required.
+        </small>
+      </div>
+
+      <div *ngIf="!isAddMode">
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Role </label>
+
+        <p-select
+          class="w-full"
+          styleClass="w-full"
+          appendTo="body"
+          formControlName="roleId"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select role"
+        ></p-select>
+      </div>
+
+      <div *ngIf="!isAddMode">
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Status </label>
+
+        <p-select
+          class="w-full"
+          styleClass="w-full"
+          appendTo="body"
+          formControlName="status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select status"
+        ></p-select>
+      </div>
+    </form>
+  </ng-container>
+
+  <ng-container *ngIf="isDeleteMode">
+    <p class="text-slate-700">Are you sure you want to delete selected user/s?</p>
+
+    <div class="mt-4 rounded bg-slate-100 p-3 text-sm">
+      <p>
+        <strong>Total selected:</strong>
+        {{ selectedUsers.length }}
+      </p>
+
+      <ul class="mt-2 list-disc pl-5">
+        <li *ngFor="let item of selectedUsers">
+          {{ item.firstName }} {{ item.lastName }}
+        </li>
+      </ul>
+    </div>
+  </ng-container>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      severity="secondary"
+      [disabled]="saving"
+      (click)="close()"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      [label]="isViewMode ? 'Close' : isDeleteMode ? 'Confirm Delete' : 'Save'"
+      [icon]="isViewMode ? 'pi pi-times' : isDeleteMode ? 'pi pi-trash' : 'pi pi-save'"
+      [severity]="isDeleteMode ? 'danger' : 'primary'"
+      [loading]="saving"
+      [disabled]="loading"
+      (click)="submit()"
+    ></button>
+  </ng-template>
+</p-dialog>

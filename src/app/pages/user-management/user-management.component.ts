@@ -3,7 +3,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -12,7 +11,11 @@ import { IdleLogoutService } from '../../core/services/auth/idle-logout.service'
 import { SessionUser } from '../../core/models/auth.model';
 
 import { UserService } from '../../core/services/users/user.service';
-import { User } from '../../core/models/user.model';
+import {
+  User,
+  UserCreateRequest,
+  UserUpdateRequest
+} from '../../core/models/user.model';
 
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import {
@@ -20,6 +23,7 @@ import {
   DataTableColumn
 } from '../../shared/components/data-table/data-table.model';
 import { ModalAction } from '../../shared/enums/modal-action.enum';
+import { UserManagementModalComponent } from './modal/user-management.modal';
 
 @Component({
   selector: 'app-user-management',
@@ -27,9 +31,9 @@ import { ModalAction } from '../../shared/enums/modal-action.enum';
   imports: [
     CommonModule,
     ButtonModule,
-    DialogModule,
     ToastModule,
-    DataTableComponent
+    DataTableComponent,
+    UserManagementModalComponent
   ],
   providers: [MessageService],
   templateUrl: './user-management.component.html'
@@ -45,6 +49,7 @@ export class UserManagementComponent implements OnInit {
 
   users: User[] = [];
   loading = false;
+  modalLoading = false;
   saving = false;
 
   modalVisible = false;
@@ -53,11 +58,6 @@ export class UserManagementComponent implements OnInit {
   selectedUsers: User[] = [];
 
   columns: DataTableColumn[] = [
-    {
-      field: 'username',
-      header: 'Username',
-      minWidth: '12rem'
-    },
     {
       field: 'firstName',
       header: 'First Name',
@@ -85,12 +85,12 @@ export class UserManagementComponent implements OnInit {
     {
       icon: 'pi pi-eye',
       severity: 'info',
-      action: (row) => this.openAction(ModalAction.VIEW, row)
+      action: (row) => this.openViewModal(row)
     },
     {
       icon: 'pi pi-pencil',
       severity: 'secondary',
-      action: (row) => this.openAction(ModalAction.UPDATE, row)
+      action: (row) => this.openUpdateModal(row)
     },
     {
       icon: 'pi pi-trash',
@@ -98,14 +98,6 @@ export class UserManagementComponent implements OnInit {
       action: (row) => this.openDeleteModal([row])
     }
   ];
-
-  get isDeleteMode(): boolean {
-    return this.selectedModalAction === ModalAction.DELETE;
-  }
-
-  get deleteTitle(): string {
-    return this.selectedUsers.length > 1 ? 'Delete Users' : 'Delete User';
-  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -122,8 +114,6 @@ export class UserManagementComponent implements OnInit {
       error: (error) => {
         this.loading = false;
 
-        console.error('LOAD USERS ERROR:', error);
-
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -137,7 +127,73 @@ export class UserManagementComponent implements OnInit {
   }
 
   addUser(): void {
-    this.openAction(ModalAction.ADD);
+    this.selectedModalAction = ModalAction.ADD;
+    this.selectedUser = null;
+    this.selectedUsers = [];
+    this.modalVisible = true;
+  }
+
+  openViewModal(user: User): void {
+    this.selectedModalAction = ModalAction.VIEW;
+    this.selectedUser = null;
+    this.selectedUsers = [];
+    this.modalVisible = true;
+    this.modalLoading = true;
+
+    this.userService.getUserById(user.id).subscribe({
+      next: (freshUser) => {
+        this.selectedUser = freshUser;
+        this.modalLoading = false;
+      },
+      error: (error) => {
+        this.modalLoading = false;
+        this.closeModal();
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            error?.error?.message ||
+            error?.message ||
+            'Failed to load user details.'
+        });
+      }
+    });
+  }
+
+  openUpdateModal(user: User): void {
+    this.selectedModalAction = ModalAction.UPDATE;
+    this.selectedUser = null;
+    this.selectedUsers = [];
+    this.modalVisible = true;
+    this.modalLoading = true;
+
+    this.userService.getUserById(user.id).subscribe({
+      next: (freshUser) => {
+        this.selectedUser = freshUser;
+        this.modalLoading = false;
+      },
+      error: (error) => {
+        this.modalLoading = false;
+        this.closeModal();
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            error?.error?.message ||
+            error?.message ||
+            'Failed to load user details.'
+        });
+      }
+    });
+  }
+
+  openDeleteModal(users: User[]): void {
+    this.selectedModalAction = ModalAction.DELETE;
+    this.selectedUser = users.length === 1 ? users[0] : null;
+    this.selectedUsers = users;
+    this.modalVisible = true;
   }
 
   bulkDeleteUsers(selectedUsers: User[]): void {
@@ -148,45 +204,84 @@ export class UserManagementComponent implements OnInit {
     this.openDeleteModal(selectedUsers);
   }
 
-  openAction(action: ModalAction, user: User | null = null): void {
-    this.selectedModalAction = action;
-    this.selectedUser = user;
-
-    this.messageService.add({
-      severity: 'info',
-      summary: action,
-      detail: user
-        ? `Selected user: ${user.username}`
-        : 'Add user selected.'
-    });
-  }
-
-  openDeleteModal(users: User[]): void {
-    this.selectedModalAction = ModalAction.DELETE;
-    this.selectedUsers = users;
-    this.selectedUser = users.length === 1 ? users[0] : null;
-    this.modalVisible = true;
-  }
-
   closeModal(): void {
     this.modalVisible = false;
+    this.modalLoading = false;
     this.saving = false;
     this.selectedModalAction = null;
     this.selectedUser = null;
     this.selectedUsers = [];
   }
 
-  confirmDelete(): void {
-    if (this.selectedUsers.length === 0) {
+  handleCreateUser(payload: UserCreateRequest): void {
+    this.saving = true;
+
+    this.userService.createUser(payload).subscribe({
+      next: (response) => {
+        this.saving = false;
+        this.closeModal();
+        this.loadUsers();
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: response?.message || 'User created successfully.'
+        });
+      },
+      error: (error) => {
+        this.saving = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            error?.error?.message ||
+            error?.message ||
+            'Failed to create user.'
+        });
+      }
+    });
+  }
+
+  handleUpdateUser(event: { id: number; payload: UserUpdateRequest }): void {
+    this.saving = true;
+
+    this.userService.updateUser(event.id, event.payload).subscribe({
+      next: (response) => {
+        this.saving = false;
+        this.closeModal();
+        this.loadUsers();
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: response?.message || 'User updated successfully.'
+        });
+      },
+      error: (error) => {
+        this.saving = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            error?.error?.message ||
+            error?.message ||
+            'Failed to update user.'
+        });
+      }
+    });
+  }
+
+  handleDeleteUsers(ids: number[]): void {
+    if (ids.length === 0) {
       return;
     }
-
-    const ids = this.selectedUsers.map((user) => user.id);
 
     this.saving = true;
 
     this.userService.bulkDeleteUsers(ids).subscribe({
-      next: () => {
+      next: (response) => {
         this.saving = false;
         this.closeModal();
         this.loadUsers();
@@ -195,9 +290,10 @@ export class UserManagementComponent implements OnInit {
           severity: 'success',
           summary: 'Success',
           detail:
-            ids.length === 1
+            response?.message ||
+            (ids.length === 1
               ? 'User deleted successfully.'
-              : 'Selected users deleted successfully.'
+              : 'Selected users deleted successfully.')
         });
       },
       error: (error) => {

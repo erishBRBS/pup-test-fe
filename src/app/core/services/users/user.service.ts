@@ -4,14 +4,17 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
-  User
+  ApiResponse,
+  User,
+  UserCreateRequest,
+  UserUpdateRequest
 } from '../../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private readonly usersUrl = `${environment.apiBaseUrl}users`;
+  private readonly usersUrl = `${environment.apiBaseUrl.replace(/\/$/, '')}/users`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -35,7 +38,23 @@ export class UserService {
     );
   }
 
-  bulkDeleteUsers(ids: number[]): Observable<unknown> {
-    return this.http.post(`${this.usersUrl}/bulk-delete`, { ids });
+  getUserById(id: number): Observable<User> {
+    return this.http
+      .get<ApiResponse<User>>(`${this.usersUrl}/get/${id}`)
+      .pipe(map((response) => response.data));
+  }
+
+  createUser(payload: UserCreateRequest): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.usersUrl}/create`, payload);
+  }
+
+  updateUser(id: number, payload: UserUpdateRequest): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.usersUrl}/update/${id}`, payload);
+  }
+
+  bulkDeleteUsers(ids: number[]): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.usersUrl}/bulk-delete`, {
+      ids
+    });
   }
 }

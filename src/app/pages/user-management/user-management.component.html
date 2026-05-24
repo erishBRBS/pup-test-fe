@@ -1,4 +1,4 @@
-<p-toast></p-toast>
+<p-toast [life]="3000"></p-toast>
 
 <div class="min-h-screen bg-slate-100 p-6">
   <div class="mx-auto max-w-7xl">
@@ -31,51 +31,17 @@
       (bulkDeleteClicked)="bulkDeleteUsers($event)"
     ></app-data-table>
   </div>
-  <p-dialog
-    [(visible)]="modalVisible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [style]="{ width: '32rem' }"
-    [header]="deleteTitle"
-    (onHide)="closeModal()"
-  >
-    <ng-container *ngIf="isDeleteMode">
-      <p class="text-slate-700">Are you sure you want to delete selected user/s?</p>
-
-      <div class="mt-4 rounded bg-slate-100 p-3 text-sm">
-        <p>
-          <strong>Total selected:</strong>
-          {{ selectedUsers.length }}
-        </p>
-
-        <ul class="mt-2 list-disc pl-5">
-          <li *ngFor="let item of selectedUsers">
-            {{ item.firstName }} {{ item.lastName }}
-          </li>
-        </ul>
-      </div>
-    </ng-container>
-
-    <ng-template pTemplate="footer">
-      <button
-        pButton
-        type="button"
-        label="Cancel"
-        severity="secondary"
-        [disabled]="saving"
-        (click)="closeModal()"
-      ></button>
-
-      <button
-        pButton
-        type="button"
-        label="Confirm"
-        icon="pi pi-trash"
-        severity="danger"
-        [loading]="saving"
-        (click)="confirmDelete()"
-      ></button>
-    </ng-template>
-  </p-dialog>
 </div>
+
+<app-user-management-modal
+  [(visible)]="modalVisible"
+  [action]="selectedModalAction"
+  [user]="selectedUser"
+  [selectedUsers]="selectedUsers"
+  [loading]="modalLoading"
+  [saving]="saving"
+  (closed)="closeModal()"
+  (createSubmit)="handleCreateUser($event)"
+  (updateSubmit)="handleUpdateUser($event)"
+  (deleteSubmit)="handleDeleteUsers($event)"
+></app-user-management-modal>
