@@ -31,6 +31,11 @@ export interface UserUpdateRequest {
   roleId: number;
   status: boolean;
 }
+export interface UserProfileUpdateRequest {
+  username: string;
+  firstName: string;
+  lastName: string;
+}
 
 export interface Pagination {
   pageNumber: number;

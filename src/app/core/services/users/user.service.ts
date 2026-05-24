@@ -3,10 +3,12 @@ import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { SessionUser } from '../../models/auth.model';
 import {
   ApiResponse,
   User,
   UserCreateRequest,
+  UserProfileUpdateRequest,
   UserUpdateRequest
 } from '../../models/user.model';
 
@@ -50,6 +52,13 @@ export class UserService {
 
   updateUser(id: number, payload: UserUpdateRequest): Observable<ApiResponse<unknown>> {
     return this.http.put<ApiResponse<unknown>>(`${this.usersUrl}/update/${id}`, payload);
+  }
+
+  updateProfile(payload: UserProfileUpdateRequest): Observable<ApiResponse<SessionUser>> {
+    return this.http.put<ApiResponse<SessionUser>>(
+      `${this.usersUrl}/profile/update`,
+      payload
+    );
   }
 
   bulkDeleteUsers(ids: number[]): Observable<ApiResponse<unknown>> {
