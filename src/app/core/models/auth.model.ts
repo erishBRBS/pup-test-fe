@@ -42,3 +42,9 @@ export interface RefreshTokenResponseData {
   refreshTokenExpiresAt?: string;
   token?: TokenResponse;
 }
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
