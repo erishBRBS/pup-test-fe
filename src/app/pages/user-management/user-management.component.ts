@@ -11,16 +11,12 @@ import { IdleLogoutService } from '../../core/services/auth/idle-logout.service'
 import { SessionUser } from '../../core/models/auth.model';
 
 import { UserService } from '../../core/services/users/user.service';
-import {
-  User,
-  UserCreateRequest,
-  UserUpdateRequest
-} from '../../core/models/user.model';
+import { User, UserCreateRequest, UserUpdateRequest } from '../../core/models/user.model';
 
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import {
   DataTableAction,
-  DataTableColumn
+  DataTableColumn,
 } from '../../shared/components/data-table/data-table.model';
 import { ModalAction } from '../../shared/enums/modal-action.enum';
 import { UserManagementModalComponent } from './modal/user-management.modal';
@@ -33,10 +29,10 @@ import { UserManagementModalComponent } from './modal/user-management.modal';
     ButtonModule,
     ToastModule,
     DataTableComponent,
-    UserManagementModalComponent
+    UserManagementModalComponent,
   ],
   providers: [MessageService],
-  templateUrl: './user-management.component.html'
+  templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit {
   private readonly authService = inject(AuthService);
@@ -44,6 +40,7 @@ export class UserManagementComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
+  private readonly protectedAdminId = 1;
 
   user: SessionUser | null = this.authService.getCurrentUser();
 
@@ -61,42 +58,45 @@ export class UserManagementComponent implements OnInit {
     {
       field: 'firstName',
       header: 'First Name',
-      minWidth: '12rem'
+      minWidth: '12rem',
     },
     {
       field: 'lastName',
       header: 'Last Name',
-      minWidth: '12rem'
+      minWidth: '12rem',
     },
     {
       field: 'role.roleName',
       header: 'Role',
-      minWidth: '10rem'
+      minWidth: '10rem',
     },
     {
       field: 'status',
       header: 'Status',
       type: 'boolean',
-      minWidth: '10rem'
-    }
+      minWidth: '10rem',
+    },
   ];
 
   actions: DataTableAction<User>[] = [
     {
       icon: 'pi pi-eye',
       severity: 'info',
-      action: (row) => this.openViewModal(row)
+      action: (row) => this.openViewModal(row),
+      disabled: (row) => this.isProtectedUser(row),
     },
     {
       icon: 'pi pi-pencil',
       severity: 'secondary',
-      action: (row) => this.openUpdateModal(row)
+      action: (row) => this.openUpdateModal(row),
+      disabled: (row) => this.isProtectedUser(row),
     },
     {
       icon: 'pi pi-trash',
       severity: 'danger',
-      action: (row) => this.openDeleteModal([row])
-    }
+      action: (row) => this.openDeleteModal([row]),
+      disabled: (row) => this.isProtectedUser(row),
+    },
   ];
 
   ngOnInit(): void {
@@ -117,12 +117,9 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to load users.'
+          detail: error?.error?.message || error?.message || 'Failed to load users.',
         });
-      }
+      },
     });
   }
 
@@ -152,12 +149,9 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to load user details.'
+          detail: error?.error?.message || error?.message || 'Failed to load user details.',
         });
-      }
+      },
     });
   }
 
@@ -180,28 +174,45 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to load user details.'
+          detail: error?.error?.message || error?.message || 'Failed to load user details.',
         });
-      }
+      },
     });
   }
 
   openDeleteModal(users: User[]): void {
+    const allowedUsers = users.filter((user) => !this.isProtectedUser(user));
+
+    if (allowedUsers.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not allowed',
+        detail: 'The main admin account cannot be deleted.',
+        life: 3000,
+      });
+      return;
+    }
+
     this.selectedModalAction = ModalAction.DELETE;
-    this.selectedUser = users.length === 1 ? users[0] : null;
-    this.selectedUsers = users;
+    this.selectedUser = allowedUsers.length === 1 ? allowedUsers[0] : null;
+    this.selectedUsers = allowedUsers;
     this.modalVisible = true;
   }
 
   bulkDeleteUsers(selectedUsers: User[]): void {
-    if (selectedUsers.length === 0) {
+    const allowedUsers = selectedUsers.filter((user) => !this.isProtectedUser(user));
+
+    if (allowedUsers.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not allowed',
+        detail: 'The main admin account cannot be deleted.',
+        life: 3000,
+      });
       return;
     }
 
-    this.openDeleteModal(selectedUsers);
+    this.openDeleteModal(allowedUsers);
   }
 
   closeModal(): void {
@@ -225,7 +236,7 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: response?.message || 'User created successfully.'
+          detail: response?.message || 'User created successfully.',
         });
       },
       error: (error) => {
@@ -234,12 +245,9 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to create user.'
+          detail: error?.error?.message || error?.message || 'Failed to create user.',
         });
-      }
+      },
     });
   }
 
@@ -255,7 +263,7 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: response?.message || 'User updated successfully.'
+          detail: response?.message || 'User updated successfully.',
         });
       },
       error: (error) => {
@@ -264,23 +272,28 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to update user.'
+          detail: error?.error?.message || error?.message || 'Failed to update user.',
         });
-      }
+      },
     });
   }
 
   handleDeleteUsers(ids: number[]): void {
-    if (ids.length === 0) {
+    const safeIds = ids.filter((id) => id !== this.protectedAdminId);
+
+    if (safeIds.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not allowed',
+        detail: 'The main admin account cannot be deleted.',
+        life: 3000,
+      });
       return;
     }
 
     this.saving = true;
 
-    this.userService.bulkDeleteUsers(ids).subscribe({
+    this.userService.bulkDeleteUsers(safeIds).subscribe({
       next: (response) => {
         this.saving = false;
         this.closeModal();
@@ -291,9 +304,10 @@ export class UserManagementComponent implements OnInit {
           summary: 'Success',
           detail:
             response?.message ||
-            (ids.length === 1
+            (safeIds.length === 1
               ? 'User deleted successfully.'
-              : 'Selected users deleted successfully.')
+              : 'Selected users deleted successfully.'),
+          life: 3000,
         });
       },
       error: (error) => {
@@ -302,19 +316,21 @@ export class UserManagementComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail:
-            error?.error?.message ||
-            error?.message ||
-            'Failed to delete selected user/s.'
+          detail: error?.error?.message || error?.message || 'Failed to delete selected user/s.',
+          life: 3000,
         });
-      }
+      },
     });
   }
+
+  isProtectedUser = (user: User): boolean => {
+    return user.id === this.protectedAdminId;
+  };
 
   logout(): void {
     this.authService.logoutRequest().subscribe({
       next: () => this.completeLogout(),
-      error: () => this.completeLogout()
+      error: () => this.completeLogout(),
     });
   }
 

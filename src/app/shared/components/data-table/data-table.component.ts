@@ -48,6 +48,8 @@ export class DataTableComponent<T extends Record<string, any>> {
   @Input() rows = PaginationHelper.defaultPageSize;
   @Input() rowsPerPageOptions = PaginationHelper.rowsPerPageOptions;
 
+  @Input() rowDisabled: (row: T) => boolean = () => false;
+
   @Output() addClicked = new EventEmitter<void>();
   @Output() bulkDeleteClicked = new EventEmitter<T[]>();
   @Output() selectionChanged = new EventEmitter<T[]>();
@@ -56,9 +58,11 @@ export class DataTableComponent<T extends Record<string, any>> {
   selectAllChecked = false;
   searchValue = '';
 
-  skeletonRows: any[] = Array.from({ length: PaginationHelper.defaultPageSize }).map((_, index) => ({
-    id: `skeleton-${index}`,
-  }));
+  skeletonRows: any[] = Array.from({ length: PaginationHelper.defaultPageSize }).map(
+    (_, index) => ({
+      id: `skeleton-${index}`,
+    }),
+  );
 
   get tableValue(): any[] {
     return this.loading ? this.skeletonRows : this.data;
@@ -102,24 +106,40 @@ export class DataTableComponent<T extends Record<string, any>> {
     const filteredRows = table.filteredValue as T[] | null | undefined;
     const rowsToSelect = filteredRows ?? this.data;
 
-    this.selectedRows = this.selectAllChecked ? [...rowsToSelect] : [];
+    const selectableRows = rowsToSelect.filter((row) => !this.isRowDisabled(row));
+
+    this.selectedRows = this.selectAllChecked ? [...selectableRows] : [];
 
     this.selectionChanged.emit(this.selectedRows);
   }
 
   onSelectionChange(): void {
+    this.selectedRows = this.selectedRows.filter((row) => !this.isRowDisabled(row));
+
+    const selectableRows = this.data.filter((row) => !this.isRowDisabled(row));
+
     this.selectAllChecked =
-      this.data.length > 0 && this.selectedRows.length === this.data.length;
+      selectableRows.length > 0 && this.selectedRows.length === selectableRows.length;
 
     this.selectionChanged.emit(this.selectedRows);
   }
 
   onBulkDelete(): void {
-    if (this.selectedRows.length === 0) {
+    const selectedAllowedRows = this.selectedRows.filter((row) => !this.isRowDisabled(row));
+
+    if (selectedAllowedRows.length === 0) {
       return;
     }
 
-    this.bulkDeleteClicked.emit(this.selectedRows);
+    this.bulkDeleteClicked.emit(selectedAllowedRows);
+  }
+
+  isRowDisabled(row: T): boolean {
+    return !this.loading && this.rowDisabled(row);
+  }
+
+  isActionDisabled(action: DataTableAction<T>, row: T): boolean {
+    return action.disabled ? action.disabled(row) : false;
   }
 
   getValue(row: T, field: string): any {

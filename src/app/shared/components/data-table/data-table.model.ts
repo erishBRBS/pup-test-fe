@@ -13,6 +13,7 @@ export interface DataTableAction<T> {
   icon: string;
   severity?: 'primary' | 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'help' | 'contrast';
   action: (row: T) => void;
+  disabled?: (row: T) => boolean;
 }
 
 export interface DataTableQuery {

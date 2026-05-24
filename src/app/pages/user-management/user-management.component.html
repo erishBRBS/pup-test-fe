@@ -29,6 +29,7 @@
       deleteButtonLabel="Delete"
       (addClicked)="addUser()"
       (bulkDeleteClicked)="bulkDeleteUsers($event)"
+      [rowDisabled]="isProtectedUser"
     ></app-data-table>
   </div>
 </div>

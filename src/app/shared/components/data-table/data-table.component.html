@@ -34,9 +34,7 @@
               (onChange)="toggleSelectAllPage($event.checked, dt)"
             ></p-checkbox>
 
-            <span class="text-sm text-slate-600">
-              Select all
-            </span>
+            <span class="text-sm text-slate-600"> Select all </span>
           </div>
 
           <p-iconfield iconPosition="left">
@@ -102,25 +100,20 @@
             </div>
           </th>
 
-          <th
-            *ngIf="column.sortable === false"
-            [style.min-width]="column.minWidth || '10rem'"
-          >
+          <th *ngIf="column.sortable === false" [style.min-width]="column.minWidth || '10rem'">
             {{ column.header }}
           </th>
         </ng-container>
 
-        <th *ngIf="actions.length > 0" style="min-width: 12rem">
-          Actions
-        </th>
+        <th *ngIf="actions.length > 0" style="min-width: 12rem">Actions</th>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-row>
-      <tr>
+      <tr [ngClass]="{ 'opacity-50 bg-slate-50': isRowDisabled(row) }">
         <td>
           <ng-container *ngIf="!loading; else checkboxSkeleton">
-            <p-tableCheckbox [value]="row"></p-tableCheckbox>
+            <p-tableCheckbox [value]="row" [disabled]="isRowDisabled(row)"></p-tableCheckbox>
           </ng-container>
 
           <ng-template #checkboxSkeleton>
@@ -181,10 +174,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td
-          [attr.colspan]="columns.length + 2"
-          class="py-4 text-center text-slate-500"
-        >
+        <td [attr.colspan]="columns.length + 2" class="py-4 text-center text-slate-500">
           No records found.
         </td>
       </tr>
