@@ -1,0 +1,83 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+  <div class="w-full max-w-md">
+    <p-card styleClass="shadow-lg rounded-2xl">
+      <ng-template pTemplate="header">
+        <div class="px-6 pt-6 text-center">
+          <h1 class="text-2xl font-bold text-slate-900">
+            User Management
+          </h1>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Login to your account
+          </p>
+        </div>
+      </ng-template>
+
+      <form [formGroup]="form" (ngSubmit)="login()" class="space-y-4">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">
+            Username
+          </label>
+
+          <input
+            pInputText
+            type="text"
+            formControlName="username"
+            placeholder="Enter username"
+            class="w-full"
+          />
+
+          <small
+            *ngIf="
+              form.controls.username.touched &&
+              form.controls.username.hasError('required')
+            "
+            class="mt-1 block text-red-500"
+          >
+            Username is required.
+          </small>
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">
+            Password
+          </label>
+
+          <p-password
+            formControlName="password"
+            placeholder="Enter password"
+            [feedback]="false"
+            [toggleMask]="true"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          ></p-password>
+
+          <small
+            *ngIf="
+              form.controls.password.touched &&
+              form.controls.password.hasError('required')
+            "
+            class="mt-1 block text-red-500"
+          >
+            Password is required.
+          </small>
+        </div>
+
+        <div
+          *ngIf="errorMessage"
+          class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600"
+        >
+          {{ errorMessage }}
+        </div>
+
+        <p-button
+          type="submit"
+          label="Login"
+          icon="pi pi-sign-in"
+          styleClass="w-full"
+          [loading]="loading"
+        ></p-button>
+      </form>
+    </p-card>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+  <p-card styleClass="w-full max-w-md text-center shadow-lg rounded-2xl">
+    <h1 class="text-3xl font-bold text-slate-900">
+      Hello! {{ displayName }}
+    </h1>
+
+    <p class="mt-2 text-sm text-slate-500">
+      You are logged in as User.
+    </p>
+
+    <div class="mt-6">
+      <p-button
+        label="Logout"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        (onClick)="logout()"
+      ></p-button>
+    </div>
+  </p-card>
+</div>
