@@ -1,13 +1,12 @@
+<p-toast [life]="3000"></p-toast>
+
 <div class="min-h-screen bg-slate-100 p-6">
-  <div class="mx-auto max-w-5xl">
+  <div class="mx-auto max-w-7xl">
     <div class="mb-6 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">
-          User Management
-        </h1>
-        <p class="text-sm text-slate-500">
-          Welcome, {{ user?.firstName }} {{ user?.lastName }}
-        </p>
+        <h1 class="text-2xl font-bold text-slate-900">User Management</h1>
+
+        <p class="text-sm text-slate-500">Welcome, {{ user?.firstName }} {{ user?.lastName }}</p>
       </div>
 
       <p-button
@@ -18,10 +17,32 @@
       ></p-button>
     </div>
 
-    <p-card>
-      <p class="text-slate-700">
-        Hello World! This card is for user management table and other related features. You can add, edit, or delete users from this page.
-      </p>
-    </p-card>
+    <app-data-table
+      title="Users"
+      subtitle="Manage users"
+      [data]="users"
+      [columns]="columns"
+      [actions]="actions"
+      [loading]="loading"
+      dataKey="id"
+      addButtonLabel="Add"
+      deleteButtonLabel="Delete"
+      (addClicked)="addUser()"
+      (bulkDeleteClicked)="bulkDeleteUsers($event)"
+      [rowDisabled]="isProtectedUser"
+    ></app-data-table>
   </div>
 </div>
+
+<app-user-management-modal
+  [(visible)]="modalVisible"
+  [action]="selectedModalAction"
+  [user]="selectedUser"
+  [selectedUsers]="selectedUsers"
+  [loading]="modalLoading"
+  [saving]="saving"
+  (closed)="closeModal()"
+  (createSubmit)="handleCreateUser($event)"
+  (updateSubmit)="handleUpdateUser($event)"
+  (deleteSubmit)="handleDeleteUsers($event)"
+></app-user-management-modal>
