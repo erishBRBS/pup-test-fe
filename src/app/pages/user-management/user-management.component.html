@@ -4,13 +4,9 @@
   <div class="mx-auto max-w-7xl">
     <div class="mb-6 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">
-          User Management
-        </h1>
+        <h1 class="text-2xl font-bold text-slate-900">User Management</h1>
 
-        <p class="text-sm text-slate-500">
-          Welcome, {{ user?.firstName }} {{ user?.lastName }}
-        </p>
+        <p class="text-sm text-slate-500">Welcome, {{ user?.firstName }} {{ user?.lastName }}</p>
       </div>
 
       <p-button
@@ -35,4 +31,51 @@
       (bulkDeleteClicked)="bulkDeleteUsers($event)"
     ></app-data-table>
   </div>
+  <p-dialog
+    [(visible)]="modalVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '32rem' }"
+    [header]="deleteTitle"
+    (onHide)="closeModal()"
+  >
+    <ng-container *ngIf="isDeleteMode">
+      <p class="text-slate-700">Are you sure you want to delete selected user/s?</p>
+
+      <div class="mt-4 rounded bg-slate-100 p-3 text-sm">
+        <p>
+          <strong>Total selected:</strong>
+          {{ selectedUsers.length }}
+        </p>
+
+        <ul class="mt-2 list-disc pl-5">
+          <li *ngFor="let item of selectedUsers">
+            {{ item.firstName }} {{ item.lastName }}
+          </li>
+        </ul>
+      </div>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [disabled]="saving"
+        (click)="closeModal()"
+      ></button>
+
+      <button
+        pButton
+        type="button"
+        label="Confirm"
+        icon="pi pi-trash"
+        severity="danger"
+        [loading]="saving"
+        (click)="confirmDelete()"
+      ></button>
+    </ng-template>
+  </p-dialog>
 </div>

@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -26,6 +27,7 @@ import { ModalAction } from '../../shared/enums/modal-action.enum';
   imports: [
     CommonModule,
     ButtonModule,
+    DialogModule,
     ToastModule,
     DataTableComponent
   ],
@@ -43,9 +45,12 @@ export class UserManagementComponent implements OnInit {
 
   users: User[] = [];
   loading = false;
+  saving = false;
 
+  modalVisible = false;
   selectedModalAction: ModalAction | null = null;
   selectedUser: User | null = null;
+  selectedUsers: User[] = [];
 
   columns: DataTableColumn[] = [
     {
@@ -90,9 +95,17 @@ export class UserManagementComponent implements OnInit {
     {
       icon: 'pi pi-trash',
       severity: 'danger',
-      action: (row) => this.openAction(ModalAction.DELETE, row)
+      action: (row) => this.openDeleteModal([row])
     }
   ];
+
+  get isDeleteMode(): boolean {
+    return this.selectedModalAction === ModalAction.DELETE;
+  }
+
+  get deleteTitle(): string {
+    return this.selectedUsers.length > 1 ? 'Delete Users' : 'Delete User';
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -128,32 +141,11 @@ export class UserManagementComponent implements OnInit {
   }
 
   bulkDeleteUsers(selectedUsers: User[]): void {
-    const ids = selectedUsers.map((user) => user.id);
+    if (selectedUsers.length === 0) {
+      return;
+    }
 
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Bulk Delete',
-      detail: `${ids.length} user(s) selected. Modal/confirmation next.`
-    });
-
-    // Later kapag ready na:
-    // this.userService.bulkDeleteUsers(ids).subscribe({
-    //   next: () => {
-    //     this.messageService.add({
-    //       severity: 'success',
-    //       summary: 'Success',
-    //       detail: 'Selected users deleted successfully.'
-    //     });
-    //     this.loadUsers();
-    //   },
-    //   error: () => {
-    //     this.messageService.add({
-    //       severity: 'error',
-    //       summary: 'Error',
-    //       detail: 'Failed to delete selected users.'
-    //     });
-    //   }
-    // });
+    this.openDeleteModal(selectedUsers);
   }
 
   openAction(action: ModalAction, user: User | null = null): void {
@@ -166,6 +158,60 @@ export class UserManagementComponent implements OnInit {
       detail: user
         ? `Selected user: ${user.username}`
         : 'Add user selected.'
+    });
+  }
+
+  openDeleteModal(users: User[]): void {
+    this.selectedModalAction = ModalAction.DELETE;
+    this.selectedUsers = users;
+    this.selectedUser = users.length === 1 ? users[0] : null;
+    this.modalVisible = true;
+  }
+
+  closeModal(): void {
+    this.modalVisible = false;
+    this.saving = false;
+    this.selectedModalAction = null;
+    this.selectedUser = null;
+    this.selectedUsers = [];
+  }
+
+  confirmDelete(): void {
+    if (this.selectedUsers.length === 0) {
+      return;
+    }
+
+    const ids = this.selectedUsers.map((user) => user.id);
+
+    this.saving = true;
+
+    this.userService.bulkDeleteUsers(ids).subscribe({
+      next: () => {
+        this.saving = false;
+        this.closeModal();
+        this.loadUsers();
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail:
+            ids.length === 1
+              ? 'User deleted successfully.'
+              : 'Selected users deleted successfully.'
+        });
+      },
+      error: (error) => {
+        this.saving = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            error?.error?.message ||
+            error?.message ||
+            'Failed to delete selected user/s.'
+        });
+      }
     });
   }
 
