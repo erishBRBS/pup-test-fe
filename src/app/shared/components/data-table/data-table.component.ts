@@ -68,8 +68,16 @@ export class DataTableComponent<T extends Record<string, any>> {
     return this.columns.map((column) => column.field);
   }
 
-  search(table: Table): void {
-    table.filterGlobal(this.searchValue.trim(), 'contains');
+  onSearchInput(table: Table, value: string): void {
+    this.searchValue = value;
+    table.first = 0;
+    table.filterGlobal(value.trim(), 'contains');
+
+    if (!value.trim()) {
+      this.selectAllChecked = false;
+      this.selectedRows = [];
+      this.selectionChanged.emit(this.selectedRows);
+    }
   }
 
   clear(table: Table): void {
@@ -78,17 +86,23 @@ export class DataTableComponent<T extends Record<string, any>> {
     this.selectAllChecked = false;
 
     table.clear();
+    table.first = 0;
+    table.filterGlobal('', 'contains');
 
     this.selectionChanged.emit(this.selectedRows);
   }
 
-  toggleSelectAllPage(checked: boolean | undefined): void {
+  toggleSelectAllPage(checked: boolean | undefined, table: Table): void {
     if (this.loading) {
       return;
     }
 
     this.selectAllChecked = !!checked;
-    this.selectedRows = this.selectAllChecked ? [...this.data] : [];
+
+    const filteredRows = table.filteredValue as T[] | null | undefined;
+    const rowsToSelect = filteredRows ?? this.data;
+
+    this.selectedRows = this.selectAllChecked ? [...rowsToSelect] : [];
 
     this.selectionChanged.emit(this.selectedRows);
   }

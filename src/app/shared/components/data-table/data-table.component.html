@@ -24,7 +24,6 @@
     (selectionChange)="onSelectionChange()"
     styleClass="p-datatable-sm"
   >
-    >
     <ng-template pTemplate="caption">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div class="flex flex-col gap-2 md:flex-row md:items-center">
@@ -32,10 +31,12 @@
             <p-checkbox
               [binary]="true"
               [(ngModel)]="selectAllChecked"
-              (onChange)="toggleSelectAllPage($event.checked)"
+              (onChange)="toggleSelectAllPage($event.checked, dt)"
             ></p-checkbox>
 
-            <span class="text-sm text-slate-600"> Select all </span>
+            <span class="text-sm text-slate-600">
+              Select all
+            </span>
           </div>
 
           <p-iconfield iconPosition="left">
@@ -48,7 +49,7 @@
               type="text"
               placeholder="Search keyword"
               [(ngModel)]="searchValue"
-              (keyup.enter)="search(dt)"
+              (ngModelChange)="onSearchInput(dt, $event)"
             />
           </p-iconfield>
         </div>
@@ -101,12 +102,17 @@
             </div>
           </th>
 
-          <th *ngIf="column.sortable === false" [style.min-width]="column.minWidth || '10rem'">
+          <th
+            *ngIf="column.sortable === false"
+            [style.min-width]="column.minWidth || '10rem'"
+          >
             {{ column.header }}
           </th>
         </ng-container>
 
-        <th *ngIf="actions.length > 0" style="min-width: 12rem">Actions</th>
+        <th *ngIf="actions.length > 0" style="min-width: 12rem">
+          Actions
+        </th>
       </tr>
     </ng-template>
 
@@ -175,7 +181,10 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td [attr.colspan]="columns.length + 2" class="py-4 text-center text-slate-500">
+        <td
+          [attr.colspan]="columns.length + 2"
+          class="py-4 text-center text-slate-500"
+        >
           No records found.
         </td>
       </tr>
