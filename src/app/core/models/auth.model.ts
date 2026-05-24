@@ -1,9 +1,6 @@
 export interface ApiResponse<T> {
-  success?: boolean;
   message: string;
   data: T;
-  statusCode?: number;
-  pagination?: unknown;
 }
 
 export interface LoginRequest {
@@ -11,18 +8,7 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponseData {
-  user: SessionUser;
-  token: AuthToken | string;
-}
-
-export interface AuthToken {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: string;
-}
-
-export interface UserRole {
+export interface Role {
   id: number;
   roleName: string;
 }
@@ -30,11 +16,29 @@ export interface UserRole {
 export interface SessionUser {
   id: number;
   username: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  status?: boolean;
-
-  role?: UserRole;
+  firstName: string;
+  lastName: string;
+  role?: Role;
   roleName?: string;
+  status: boolean;
+}
+
+export interface TokenResponse {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+}
+
+export interface LoginResponseData {
+  user: SessionUser;
+  token: TokenResponse;
+}
+
+export interface RefreshTokenResponseData {
+  accessToken?: string;
+  accessTokenExpiresAt?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
+  token?: TokenResponse;
 }

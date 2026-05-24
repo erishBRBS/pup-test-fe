@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
   ApiResponse,
   LoginRequest,
   LoginResponseData,
-  SessionUser
+  RefreshTokenResponseData,
+  SessionUser,
+  TokenResponse
 } from '../../models/auth.model';
 import { TokenStorageService } from './token-storage.service';
 
@@ -15,6 +17,8 @@ import { TokenStorageService } from './token-storage.service';
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly apiBaseUrl = environment.apiBaseUrl.replace(/\/$/, '');
+
   constructor(
     private readonly http: HttpClient,
     private readonly tokenStorage: TokenStorageService
@@ -23,32 +27,68 @@ export class AuthService {
   login(payload: LoginRequest): Observable<ApiResponse<LoginResponseData>> {
     return this.http
       .post<ApiResponse<LoginResponseData>>(
-        `${environment.apiBaseUrl}${environment.loginPath}`,
+        `${this.apiBaseUrl}/${environment.loginPath}`,
         payload
       )
       .pipe(
         tap((response) => {
           const data = response.data;
 
-          const token =
+          const accessToken =
             typeof data.token === 'string'
               ? data.token
               : data.token.accessToken;
+
+          const refreshToken =
+            typeof data.token === 'string'
+              ? ''
+              : data.token.refreshToken;
 
           const user: SessionUser = {
             ...data.user,
             roleName: data.user.role?.roleName ?? data.user.roleName
           };
 
-          this.tokenStorage.saveToken(token);
+          this.tokenStorage.saveAccessToken(accessToken);
+
+          if (refreshToken) {
+            this.tokenStorage.saveRefreshToken(refreshToken);
+          }
+
           this.tokenStorage.saveUser(user);
         })
       );
   }
 
-  logoutRequest(): Observable<unknown> {
+  refreshToken(): Observable<string> {
+    const refreshToken = this.tokenStorage.getRefreshToken();
+
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token found.'));
+    }
+
     return this.http
-      .post(`${environment.apiBaseUrl}${environment.logoutPath}`, {})
+      .post<ApiResponse<RefreshTokenResponseData>>(
+        `${this.apiBaseUrl}/${environment.refreshPath}`,
+        { refreshToken }
+      )
+      .pipe(
+        map((response) => this.extractTokenResponse(response.data)),
+        tap((tokenData) => {
+          this.tokenStorage.saveAccessToken(tokenData.accessToken);
+          this.tokenStorage.saveRefreshToken(tokenData.refreshToken);
+        }),
+        map((tokenData) => tokenData.accessToken)
+      );
+  }
+
+  logoutRequest(): Observable<unknown> {
+    const refreshToken = this.tokenStorage.getRefreshToken();
+
+    return this.http
+      .post(`${this.apiBaseUrl}/${environment.logoutPath}`, {
+        refreshToken
+      })
       .pipe(
         catchError(() => {
           return of(null);
@@ -61,7 +101,11 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this.tokenStorage.getToken();
+    return this.tokenStorage.getAccessToken();
+  }
+
+  getRefreshToken(): string | null {
+    return this.tokenStorage.getRefreshToken();
   }
 
   isLoggedIn(): boolean {
@@ -70,8 +114,27 @@ export class AuthService {
 
   logout(): void {
     this.tokenStorage.clear();
+  }
 
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('auth_user');
+  private extractTokenResponse(data: RefreshTokenResponseData): TokenResponse {
+    if (data.token) {
+      return data.token;
+    }
+
+    if (
+      data.accessToken &&
+      data.accessTokenExpiresAt &&
+      data.refreshToken &&
+      data.refreshTokenExpiresAt
+    ) {
+      return {
+        accessToken: data.accessToken,
+        accessTokenExpiresAt: data.accessTokenExpiresAt,
+        refreshToken: data.refreshToken,
+        refreshTokenExpiresAt: data.refreshTokenExpiresAt
+      };
+    }
+
+    throw new Error('Invalid refresh token response.');
   }
 }
