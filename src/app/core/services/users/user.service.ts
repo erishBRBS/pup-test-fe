@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { SessionUser } from '../../models/auth.model';
 import {
   ApiResponse,
+  RegisterRequest,
   User,
   UserCreateRequest,
   UserProfileUpdateRequest,
@@ -48,6 +49,10 @@ export class UserService {
 
   createUser(payload: UserCreateRequest): Observable<ApiResponse<unknown>> {
     return this.http.post<ApiResponse<unknown>>(`${this.usersUrl}/create`, payload);
+  }
+
+  registerUser(payload: RegisterRequest): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.usersUrl}/register`, payload);
   }
 
   updateUser(id: number, payload: UserUpdateRequest): Observable<ApiResponse<unknown>> {

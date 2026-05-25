@@ -24,6 +24,15 @@ export interface UserCreateRequest {
   status: boolean;
 }
 
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  roleId: number;
+  status: boolean;
+}
+
 export interface UserUpdateRequest {
   username: string;
   firstName: string;
@@ -32,7 +41,6 @@ export interface UserUpdateRequest {
   status: boolean;
 }
 export interface UserProfileUpdateRequest {
-  username: string;
   firstName: string;
   lastName: string;
 }

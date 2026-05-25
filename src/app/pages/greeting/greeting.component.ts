@@ -126,7 +126,6 @@ export class GreetingComponent {
     const payload: UserProfileUpdateRequest = {
       firstName: value.firstName,
       lastName: value.lastName,
-      username: value.username
     };
 
     this.saving = true;
@@ -140,7 +139,6 @@ export class GreetingComponent {
           ...this.user!,
           firstName: response.data?.firstName ?? payload.firstName,
           lastName: response.data?.lastName ?? payload.lastName,
-          username: response.data?.username ?? payload.username,
           role: response.data?.role ?? this.user?.role,
           roleName: response.data?.roleName ?? this.user?.roleName,
           status: response.data?.status ?? this.user?.status ?? true
